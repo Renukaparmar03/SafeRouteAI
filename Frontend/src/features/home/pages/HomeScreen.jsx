@@ -17,10 +17,50 @@ const HomeScreen = () => {
   };
 
   const quickActions = [
-    { id: 'map', label: 'Map', subtext: 'Explore Routes', icon: MapIcon, color: 'text-success', bg: 'bg-success/10', route: ROUTES.MAP },
-    { id: 'ai', label: 'AI Assistant', subtext: 'Ask Anything', icon: Bot, color: 'text-primary', bg: 'bg-primary/10', route: ROUTES.ASSISTANT },
-    { id: 'safety', label: 'Safety Check', subtext: 'Check Area Safety', icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-100', route: ROUTES.SAFETY_CHECK },
-    { id: 'trips', label: 'My Trips', subtext: 'View your trips', icon: Briefcase, color: 'text-secondary', bg: 'bg-secondary/10', route: ROUTES.MY_TRIPS },
+    { 
+      id: 'map', 
+      label: 'Map', 
+      subtext: 'Explore Routes', 
+      icon: MapIcon, 
+      color: 'text-indigo-600', 
+      gradient: 'linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 50%, #F5F3FF 100%)', 
+      hoverShadow: 'hover:shadow-[0_12px_24px_rgba(99,102,241,0.15)]', 
+      decorColor: 'from-indigo-300/20 to-transparent',
+      route: ROUTES.MAP 
+    },
+    { 
+      id: 'ai', 
+      label: 'AI Assistant', 
+      subtext: 'Ask Anything', 
+      icon: Bot, 
+      color: 'text-purple-600', 
+      gradient: 'linear-gradient(135deg, #FDF4FF 0%, #FAE8FF 50%, #F5F3FF 100%)', 
+      hoverShadow: 'hover:shadow-[0_12px_24px_rgba(217,70,239,0.15)]', 
+      decorColor: 'from-purple-300/20 to-transparent',
+      route: ROUTES.ASSISTANT 
+    },
+    { 
+      id: 'safety', 
+      label: 'Safety Check', 
+      subtext: 'Check Area Safety', 
+      icon: ShieldCheck, 
+      color: 'text-emerald-600', 
+      gradient: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 50%, #F5F3FF 100%)', 
+      hoverShadow: 'hover:shadow-[0_12px_24px_rgba(16,185,129,0.15)]', 
+      decorColor: 'from-emerald-300/20 to-transparent',
+      route: ROUTES.SAFETY_CHECK 
+    },
+    { 
+      id: 'trips', 
+      label: 'My Trips', 
+      subtext: 'View your trips', 
+      icon: Briefcase, 
+      color: 'text-rose-600', 
+      gradient: 'linear-gradient(135deg, #FFF5F5 0%, #FFE4E6 50%, #F5F3FF 100%)', 
+      hoverShadow: 'hover:shadow-[0_12px_24px_rgba(244,63,94,0.15)]', 
+      decorColor: 'from-rose-300/20 to-transparent',
+      route: ROUTES.MY_TRIPS 
+    },
   ];
 
   return (
@@ -101,13 +141,26 @@ const HomeScreen = () => {
             <button 
               key={action.id}
               onClick={() => navigate(action.route)}
-              className="flex flex-col items-start bg-white p-4 rounded-[16px] shadow-soft border border-border/40 hover:shadow-md transition-shadow active:scale-95 text-left"
+              style={{ background: action.gradient }}
+              className={`group relative flex flex-col items-start p-4 rounded-[20px] overflow-hidden border border-white/40 shadow-soft transition-all duration-300 hover:-translate-y-1 ${action.hoverShadow} active:scale-95 text-left w-full h-[120px]`}
             >
-              <div className={`w-10 h-10 rounded-full ${action.bg} flex items-center justify-center mb-2.5`}>
-                <action.icon className={`w-5 h-5 ${action.color}`} />
+              {/* Subtle decorative background shapes */}
+              <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full bg-gradient-to-br ${action.decorColor} blur-md pointer-events-none`}></div>
+              <div className="absolute -bottom-6 -left-6 w-16 h-16 rounded-full bg-white/20 blur-sm pointer-events-none"></div>
+              
+              {/* Large soft background illustration */}
+              <div className="absolute bottom-[-8px] right-[-8px] opacity-10 pointer-events-none transform rotate-12 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[20deg]">
+                <action.icon className={`w-20 h-20 ${action.color}`} />
               </div>
-              <h3 className="text-text-primary text-[14px] font-bold mb-0.5">{action.label}</h3>
-              <p className="text-text-secondary text-[11px] leading-tight">{action.subtext}</p>
+
+              {/* Floating Glassmorphism Icon Container */}
+              <div className="backdrop-blur-md bg-white/40 border border-white/60 shadow-sm rounded-[12px] w-9 h-9 flex items-center justify-center mb-2.5 transition-all duration-300 group-hover:scale-105 group-hover:bg-white/50">
+                <action.icon className={`w-4.5 h-4.5 ${action.color}`} />
+              </div>
+              
+              {/* Card Titles */}
+              <h3 className="text-text-primary text-[13.5px] font-bold tracking-tight mb-0.5 z-10">{action.label}</h3>
+              <p className="text-text-secondary text-[11px] font-medium leading-tight z-10 max-w-[85%]">{action.subtext}</p>
             </button>
           ))}
         </div>

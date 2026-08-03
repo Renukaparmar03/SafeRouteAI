@@ -17,61 +17,61 @@ const HomeScreen = () => {
   };
 
   const quickActions = [
-    { 
-      id: 'map', 
-      label: 'Map', 
-      subtext: 'Explore Routes', 
-      icon: MapIcon, 
-      color: 'text-indigo-600', 
-      gradient: 'linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 50%, #F5F3FF 100%)', 
-      hoverShadow: 'hover:shadow-[0_12px_24px_rgba(99,102,241,0.15)]', 
+    {
+      id: 'map',
+      label: 'Map',
+      subtext: 'Explore Routes',
+      icon: MapIcon,
+      color: 'text-indigo-600',
+      gradient: 'linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 50%, #F5F3FF 100%)',
+      hoverShadow: 'hover:shadow-[0_12px_24px_rgba(99,102,241,0.15)]',
       decorColor: 'from-indigo-300/20 to-transparent',
-      route: ROUTES.MAP 
+      route: ROUTES.MAP
     },
-    { 
-      id: 'ai', 
-      label: 'AI Assistant', 
-      subtext: 'Ask Anything', 
-      icon: Bot, 
-      color: 'text-purple-600', 
-      gradient: 'linear-gradient(135deg, #FDF4FF 0%, #FAE8FF 50%, #F5F3FF 100%)', 
-      hoverShadow: 'hover:shadow-[0_12px_24px_rgba(217,70,239,0.15)]', 
+    {
+      id: 'ai',
+      label: 'AI Assistant',
+      subtext: 'Ask Anything',
+      icon: Bot,
+      color: 'text-purple-600',
+      gradient: 'linear-gradient(135deg, #FDF4FF 0%, #FAE8FF 50%, #F5F3FF 100%)',
+      hoverShadow: 'hover:shadow-[0_12px_24px_rgba(217,70,239,0.15)]',
       decorColor: 'from-purple-300/20 to-transparent',
-      route: ROUTES.ASSISTANT 
+      route: ROUTES.ASSISTANT
     },
-    { 
-      id: 'safety', 
-      label: 'Safety Check', 
-      subtext: 'Check Area Safety', 
-      icon: ShieldCheck, 
-      color: 'text-emerald-600', 
-      gradient: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 50%, #F5F3FF 100%)', 
-      hoverShadow: 'hover:shadow-[0_12px_24px_rgba(16,185,129,0.15)]', 
+    {
+      id: 'safety',
+      label: 'Safety Check',
+      subtext: 'Check Area Safety',
+      icon: ShieldCheck,
+      color: 'text-emerald-600',
+      gradient: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 50%, #F5F3FF 100%)',
+      hoverShadow: 'hover:shadow-[0_12px_24px_rgba(16,185,129,0.15)]',
       decorColor: 'from-emerald-300/20 to-transparent',
-      route: ROUTES.SAFETY_CHECK 
+      route: ROUTES.SAFETY_CHECK
     },
-    { 
-      id: 'trips', 
-      label: 'My Trips', 
-      subtext: 'View your trips', 
-      icon: Briefcase, 
-      color: 'text-rose-600', 
-      gradient: 'linear-gradient(135deg, #FFF5F5 0%, #FFE4E6 50%, #F5F3FF 100%)', 
-      hoverShadow: 'hover:shadow-[0_12px_24px_rgba(244,63,94,0.15)]', 
+    {
+      id: 'trips',
+      label: 'My Trips',
+      subtext: 'View your trips',
+      icon: Briefcase,
+      color: 'text-rose-600',
+      gradient: 'linear-gradient(135deg, #FFF5F5 0%, #FFE4E6 50%, #F5F3FF 100%)',
+      hoverShadow: 'hover:shadow-[0_12px_24px_rgba(244,63,94,0.15)]',
       decorColor: 'from-rose-300/20 to-transparent',
-      route: ROUTES.MY_TRIPS 
+      route: ROUTES.MY_TRIPS
     },
   ];
 
   return (
-    <div 
+    <div
       className="relative w-full h-screen max-w-md mx-auto flex flex-col font-sans overflow-hidden"
       style={{ background: 'linear-gradient(180deg, #F0E5FF 0%, #FFFFFF 35%)' }}
     >
-      
+
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto no-scrollbar pb-32 px-5 pt-8">
-        
+
         {/* Header Section */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -88,7 +88,7 @@ const HomeScreen = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <div className="bg-white rounded-full px-3 py-1.5 flex items-center shadow-sm border border-border/50 shrink-0">
               <span className="text-[12px] font-semibold text-text-primary">🌤️ 26°C</span>
@@ -104,9 +104,9 @@ const HomeScreen = () => {
         <div className="w-full mb-6">
           <div className="w-full bg-white rounded-[16px] flex items-center px-4 py-3 shadow-soft border border-border/50">
             <Search className="w-4 h-4 text-text-secondary mr-2" />
-            <input 
-              type="text" 
-              placeholder="Search destination..." 
+            <input
+              type="text"
+              placeholder="Search destination..."
               className="flex-1 bg-transparent text-[13px] text-text-primary outline-none placeholder:text-text-secondary"
             />
           </div>
@@ -114,9 +114,9 @@ const HomeScreen = () => {
 
         {/* Hero Banner */}
         <div className="relative w-full rounded-[20px] overflow-hidden shadow-soft mb-6 bg-black/80 min-h-[160px] flex flex-col justify-center">
-          <img 
-            src={HomeBannerBg} 
-            alt="Plan Your Trip" 
+          <img
+            src={HomeBannerBg}
+            alt="Plan Your Trip"
             className="absolute inset-0 w-full h-full object-cover opacity-60"
           />
           <div className="relative z-10 p-5 pt-6">
@@ -124,9 +124,9 @@ const HomeScreen = () => {
             <p className="text-gray-100 text-[13px] leading-snug mb-5 max-w-[210px]">
               Get AI suggestions, best routes and safety insights.
             </p>
-            <Button 
-              variant="primary" 
-              size="sm" 
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => navigate(ROUTES.TRIP_PLANNER)}
               className="bg-white text-primary hover:bg-gray-50 rounded-xl px-5 py-2.5 text-[13px] font-bold shadow-md h-auto inline-flex w-auto"
             >
@@ -138,7 +138,7 @@ const HomeScreen = () => {
         {/* Quick Actions (2x2 Grid) */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           {quickActions.map((action) => (
-            <button 
+            <button
               key={action.id}
               onClick={() => navigate(action.route)}
               style={{ background: action.gradient }}
@@ -147,7 +147,7 @@ const HomeScreen = () => {
               {/* Subtle decorative background shapes */}
               <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full bg-gradient-to-br ${action.decorColor} blur-md pointer-events-none`}></div>
               <div className="absolute -bottom-6 -left-6 w-16 h-16 rounded-full bg-white/20 blur-sm pointer-events-none"></div>
-              
+
               {/* Large soft background illustration */}
               <div className="absolute bottom-[-8px] right-[-8px] opacity-10 pointer-events-none transform rotate-12 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[20deg]">
                 <action.icon className={`w-20 h-20 ${action.color}`} />
@@ -157,7 +157,7 @@ const HomeScreen = () => {
               <div className="backdrop-blur-md bg-white/40 border border-white/60 shadow-sm rounded-[12px] w-9 h-9 flex items-center justify-center mb-2.5 transition-all duration-300 group-hover:scale-105 group-hover:bg-white/50">
                 <action.icon className={`w-4.5 h-4.5 ${action.color}`} />
               </div>
-              
+
               {/* Card Titles */}
               <h3 className="text-text-primary text-[13.5px] font-bold tracking-tight mb-0.5 z-10">{action.label}</h3>
               <p className="text-text-secondary text-[11px] font-medium leading-tight z-10 max-w-[85%]">{action.subtext}</p>

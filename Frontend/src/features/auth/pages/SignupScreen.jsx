@@ -14,19 +14,49 @@ const SignupScreen = () => {
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Mock signup logic
-    setTimeout(() => {
+    setErrorMessage('');
+    
+    try {
+      const isEmail = formData.emailOrPhone.includes('@');
+      const payload = {
+        name: formData.fullName,
+        password: formData.password
+      };
+      
+      if (isEmail) {
+        payload.email = formData.emailOrPhone;
+      } else {
+        payload.phone = formData.emailOrPhone;
+      }
+
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+      
+      alert('Registration successful! Please login to continue.');
+      navigate(ROUTES.LOGIN);
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
       setIsLoading(false);
-      navigate(ROUTES.HOME);
-    }, 1500);
+    }
   };
 
   return (
@@ -73,6 +103,12 @@ const SignupScreen = () => {
 
       {/* Form Section */}
       <form onSubmit={handleSignup} className="w-full flex flex-col z-10 relative">
+        {errorMessage && (
+          <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-600 text-sm font-medium border border-red-200">
+            {errorMessage}
+          </div>
+        )}
+        
         <Input 
           id="fullName"
           label="Full Name"

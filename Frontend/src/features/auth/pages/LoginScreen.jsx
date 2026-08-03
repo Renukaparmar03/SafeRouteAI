@@ -13,19 +13,42 @@ const LoginScreen = () => {
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Mock login logic
-    setTimeout(() => {
-      setIsLoading(false);
+    setErrorMessage('');
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailOrPhone: formData.emailOrPhone,
+          password: formData.password
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+      
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data));
+      
       navigate(ROUTES.HOME);
-    }, 1500);
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -72,6 +95,12 @@ const LoginScreen = () => {
 
       {/* Form Section */}
       <form onSubmit={handleLogin} className="w-full flex flex-col z-10 relative">
+        {errorMessage && (
+          <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-600 text-sm font-medium border border-red-200">
+            {errorMessage}
+          </div>
+        )}
+        
         <Input 
           id="emailOrPhone"
           label="Email or Phone"

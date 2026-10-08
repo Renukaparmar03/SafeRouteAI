@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 import { 
   LayoutDashboard, Users, MapPin, Navigation, Bell, 
   Bot, Map, BarChart3, BellRing, Settings, LogOut, 
@@ -69,6 +70,13 @@ const NavGroup = ({ item, isActive, isActiveGroup, location }) => {
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/admin/login', { replace: true });
+  };
 
   const navItems = [
     { name: 'Dashboard', path: '/admin/home', icon: LayoutDashboard },
@@ -181,7 +189,9 @@ const Sidebar = () => {
       </nav>
 
       <div className="p-4 border-t border-white/40 shrink-0">
+        {user && <p className="px-4 pb-2 text-xs text-text-secondary truncate">Signed in as <span className="font-semibold text-text-primary">{user.name}</span></p>}
         <button
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all duration-200"
         >
           <LogOut className="w-5 h-5" />

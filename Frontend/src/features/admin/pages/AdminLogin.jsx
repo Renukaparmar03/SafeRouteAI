@@ -1,22 +1,31 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { ShieldAlert, ArrowRight } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
+import { useAuth } from '../../../context/AuthContext';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Mock login
-    setTimeout(() => {
+    setErrorMessage('');
+    try {
+      // role: 'admin' makes the server reject non-admin accounts.
+      await login({ emailOrPhone: email.trim(), password, role: 'admin' });
+      navigate(location.state?.from || '/admin/home', { replace: true });
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
       setIsLoading(false);
-      navigate('/admin/home');
-    }, 1000);
+    }
   };
 
   return (
@@ -50,6 +59,11 @@ const AdminLogin = () => {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
+            {errorMessage && (
+              <div className="p-3 rounded-lg bg-red-100 text-red-600 text-sm font-medium border border-red-200">
+                {errorMessage}
+              </div>
+            )}
             <div>
               <label className="block text-sm font-semibold text-text-primary mb-2" htmlFor="email">
                 Admin Email

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Mountain } from 'lucide-react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { ROUTES } from '../../../constants/routes';
 import { LABELS } from '../../../constants/labels';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
+import { useAuth } from '../../../context/AuthContext';
 
 const LoginScreen = () => {
   const navigate = useNavigate();
@@ -19,31 +20,21 @@ const LoginScreen = () => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
+  const { login } = useAuth();
+  const location = useLocation();
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage('');
-    
+
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          emailOrPhone: formData.emailOrPhone,
-          password: formData.password
-        })
+      const user = await login({
+        emailOrPhone: formData.emailOrPhone.trim(),
+        password: formData.password
       });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-      
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data));
-      
-      navigate(ROUTES.HOME);
+      const target = location.state?.from && location.state.from !== ROUTES.LOGIN ? location.state.from : ROUTES.HOME;
+      navigate(user.role === 'admin' && !location.state?.from ? '/admin/home' : target, { replace: true });
     } catch (error) {
       setErrorMessage(error.message);
     } finally {

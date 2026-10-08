@@ -1,4 +1,4 @@
-import { Home, Map as MapIcon, AlertTriangle, Bell, User, Navigation } from 'lucide-react';
+import { Home, AlertTriangle, Bell, User, Navigation } from 'lucide-react';
 import { ROUTES } from './routes';
 
 export const BOTTOM_NAV_ITEMS = [

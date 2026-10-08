@@ -5,6 +5,7 @@ import { ROUTES } from '../../../constants/routes';
 import { LABELS } from '../../../constants/labels';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
+import { useAuth } from '../../../context/AuthContext';
 
 const SignupScreen = () => {
   const navigate = useNavigate();
@@ -20,38 +21,29 @@ const SignupScreen = () => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
+  const { register } = useAuth();
+
   const handleSignup = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage('');
-    
+
     try {
-      const isEmail = formData.emailOrPhone.includes('@');
+      const identifier = formData.emailOrPhone.trim();
       const payload = {
-        name: formData.fullName,
+        name: formData.fullName.trim(),
         password: formData.password
       };
-      
-      if (isEmail) {
-        payload.email = formData.emailOrPhone;
+
+      if (identifier.includes('@')) {
+        payload.email = identifier;
       } else {
-        payload.phone = formData.emailOrPhone;
+        payload.phone = identifier.replace(/[\s-]/g, '');
       }
 
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-      
-      alert('Registration successful! Please login to continue.');
-      navigate(ROUTES.LOGIN);
+      // Registration also signs the user in (HTTP-only session cookie).
+      await register(payload);
+      navigate(ROUTES.HOME, { replace: true });
     } catch (error) {
       setErrorMessage(error.message);
     } finally {
@@ -131,9 +123,10 @@ const SignupScreen = () => {
           id="password"
           label="Password"
           type="password"
-          placeholder={LABELS.PLACEHOLDERS.PASSWORD}
+          placeholder="At least 8 characters"
           value={formData.password}
           onChange={handleChange}
+          minLength={8}
           required
         />
 

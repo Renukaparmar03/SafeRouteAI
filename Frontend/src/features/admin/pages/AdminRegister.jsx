@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldAlert, ArrowRight } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
+import { useAuth } from '../../../context/AuthContext';
 
 const AdminRegister = () => {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: ''
+    password: '',
+    adminCode: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -21,29 +24,17 @@ const AdminRegister = () => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage('');
-    
-    // Check for admin code logic or mock API call
+
+    // The access code is checked on the server against ADMIN_REGISTRATION_CODE.
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: 'admin',
-          adminCode: 'secure-code-to-create-admins' // Hardcoded to bypass the UI field requirement
-        })
+      await register({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        role: 'admin',
+        adminCode: formData.adminCode.trim()
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      alert('Admin registration successful! Please login.');
-      navigate('/admin/login');
+      navigate('/admin/home', { replace: true });
     } catch (error) {
       setErrorMessage(error.message);
     } finally {
@@ -127,6 +118,23 @@ const AdminRegister = () => {
                 onChange={handleChange}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                 placeholder="••••••••"
+                minLength={8}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-text-primary mb-1" htmlFor="adminCode">
+                Admin Access Code
+              </label>
+              <input
+                id="adminCode"
+                type="password"
+                value={formData.adminCode}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                placeholder="Provided by your system administrator"
+                autoComplete="off"
                 required
               />
             </div>

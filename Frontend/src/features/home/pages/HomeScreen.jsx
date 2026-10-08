@@ -1,19 +1,88 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Map as MapIcon, Bot, AlertTriangle, Briefcase, ShieldCheck, MapPin, Sparkles } from 'lucide-react';
+import { clsx } from 'clsx';
+import { Bell, Search, Map as MapIcon, Bot, Briefcase, ShieldCheck, MapPin, Sparkles } from 'lucide-react';
 import { ROUTES } from '../../../constants/routes';
 import Button from '../../../components/ui/Button';
 import BottomNavBar from '../../../components/layout/BottomNavBar';
 import HomeBannerBg from '../../../assets/images/home-banner.png';
+import { useAuth } from '../../../context/AuthContext';
+import { useNotifications } from '../../../context/NotificationContext';
+import { useCurrentLocation } from '../../../hooks/useGeolocation';
+import { mapService } from '../../../services/mapService';
+import { safetyService } from '../../../services/riskService';
+import PlaceSuggestions, { usePlaceSearch } from '../../../components/common/PlaceSuggestions';
+import { formatCoords } from '../../../utils/format';
+
+const STATUS_STYLES = {
+  LOW: { card: 'bg-[#ECFDF5] border-[#A7F3D0]', icon: 'bg-success shadow-[0_4px_12px_rgba(34,197,94,0.3)]', text: 'text-success', badge: 'bg-success' },
+  MEDIUM: { card: 'bg-[#FFFBEB] border-[#FDE68A]', icon: 'bg-warning shadow-[0_4px_12px_rgba(245,158,11,0.3)]', text: 'text-warning', badge: 'bg-warning' },
+  HIGH: { card: 'bg-[#FEF2F2] border-[#FECACA]', icon: 'bg-danger shadow-[0_4px_12px_rgba(239,68,68,0.3)]', text: 'text-danger', badge: 'bg-danger' },
+  NONE: { card: 'bg-surface border-border', icon: 'bg-text-secondary/60', text: 'text-text-secondary', badge: 'bg-text-secondary/60' },
+};
 
 const HomeScreen = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { unreadCount } = useNotifications();
+  // Location is read automatically only if the user already granted permission earlier.
+  const location = useCurrentLocation('if-granted');
+  const position = location.position;
+  const [placeName, setPlaceName] = useState(null);
+  const [safety, setSafety] = useState({ status: 'idle', data: null });
+  const [search, setSearch] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const suggestions = usePlaceSearch(search, { enabled: searchFocused, near: position });
 
-  // Mock User Data
-  const user = {
-    name: 'Renuka',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Renuka&backgroundColor=e5e7eb', // Simple placeholder avatar
-    location: 'Mumbai, India',
+  const firstName = user?.name?.split(' ')[0] || 'Traveller';
+  const avatar =
+    user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.id || 'traveller')}&backgroundColor=e5e7eb`;
+
+  useEffect(() => {
+    if (!position) return undefined;
+    let cancelled = false;
+    mapService
+      .reverseGeocode(position)
+      .then((place) => !cancelled && setPlaceName(place.shortName || place.name))
+      .catch(() => !cancelled && setPlaceName(null));
+    setSafety({ status: 'loading', data: null });
+    safetyService
+      .check(position)
+      .then((data) => !cancelled && setSafety({ status: 'success', data }))
+      .catch(() => !cancelled && setSafety({ status: 'error', data: null }));
+    return () => {
+      cancelled = true;
+    };
+  }, [position]);
+
+  const locationText = position
+    ? placeName || formatCoords(position.latitude, position.longitude)
+    : location.status === 'loading'
+      ? 'Locating…'
+      : location.status === 'error'
+        ? 'Location unavailable'
+        : 'Tap to enable location';
+
+  const safetyData = safety.data;
+  const statusStyle = STATUS_STYLES[safetyData?.riskLevel || 'NONE'];
+  const weather = safetyData?.weather;
+  const weatherLine = weather
+    ? ` Now: ${weather.condition}, ${Math.round(weather.temperature)}°C${
+        Number.isFinite(weather.precipitationProbability) ? `, ${weather.precipitationProbability}% chance of rain` : ''
+      }.`
+    : '';
+  const tip = !position
+    ? 'Enable location to get tips based on live weather and nearby risk zones.'
+    : safety.status === 'loading'
+      ? 'Checking live weather and nearby risk zones…'
+      : safety.status === 'error'
+        ? 'Weather data is currently unavailable.'
+        : `${safetyData?.advice?.[0]?.text || 'No specific advice right now'}.${weatherLine}`;
+
+  const handleSelectPlace = (place) => {
+    setSearch(place.name);
+    setSearchFocused(false);
+    navigate(ROUTES.MAP, { state: { destination: place } });
   };
 
   const quickActions = [
@@ -76,40 +145,62 @@ const HomeScreen = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-soft shrink-0">
-              <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+              <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
             </div>
             <div>
               <h1 className="text-text-primary text-[18px] font-bold">
-                Hi, {user.name} 👋
+                Hi, {firstName} 👋
               </h1>
-              <div className="flex items-center mt-0.5 text-text-secondary">
-                <MapPin className="w-3 h-3 mr-1" />
-                <p className="text-[12px] font-medium">{user.location}</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => !position && location.request().catch(() => {})}
+                className="flex items-center mt-0.5 text-text-secondary text-left"
+              >
+                <MapPin className="w-3 h-3 mr-1 shrink-0" />
+                <p className="text-[12px] font-medium truncate max-w-[150px]">{locationText}</p>
+              </button>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="bg-white rounded-full px-3 py-1.5 flex items-center shadow-sm border border-border/50 shrink-0">
-              <span className="text-[12px] font-semibold text-text-primary">🌤️ 26°C</span>
+              <span className="text-[12px] font-semibold text-text-primary">
+                {weather ? `${weather.icon} ${Math.round(weather.temperature)}°C` : '🌡️ --'}
+              </span>
             </div>
-            <button className="relative p-2 text-text-primary hover:bg-black/5 rounded-full transition-colors active:scale-95">
+            <button
+              onClick={() => navigate(ROUTES.ALERTS)}
+              aria-label={`Alerts${unreadCount ? ` (${unreadCount} unread)` : ''}`}
+              className="relative p-2 text-text-primary hover:bg-black/5 rounded-full transition-colors active:scale-95"
+            >
               <Bell className="w-6 h-6" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full border border-white"></span>
+              {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full border border-white"></span>}
             </button>
           </div>
         </div>
 
         {/* Search Bar */}
-        <div className="w-full mb-6">
+        <div className="w-full mb-6 relative z-30">
           <div className="w-full bg-white rounded-[16px] flex items-center px-4 py-3 shadow-soft border border-border/50">
             <Search className="w-4 h-4 text-text-secondary mr-2" />
             <input
               type="text"
               placeholder="Search destination..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              onKeyDown={(e) => e.key === 'Enter' && suggestions.results[0] && handleSelectPlace(suggestions.results[0])}
               className="flex-1 bg-transparent text-[13px] text-text-primary outline-none placeholder:text-text-secondary"
             />
           </div>
+          <PlaceSuggestions
+            open={searchFocused && search.trim().length >= 3}
+            results={suggestions.results}
+            loading={suggestions.loading}
+            error={suggestions.error}
+            onSelect={handleSelectPlace}
+          />
         </div>
 
         {/* Hero Banner */}
@@ -166,22 +257,36 @@ const HomeScreen = () => {
         </div>
 
         {/* Safety Status Card */}
-        <div className="w-full bg-[#ECFDF5] rounded-[16px] p-4 flex items-center justify-between shadow-sm border border-[#A7F3D0] mb-4">
+        <button
+          type="button"
+          onClick={() => navigate(ROUTES.SAFETY_CHECK)}
+          className={clsx('w-full rounded-[16px] p-4 flex items-center justify-between shadow-sm border mb-4 text-left', statusStyle.card)}
+        >
           <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-success flex items-center justify-center shrink-0 shadow-[0_4px_12px_rgba(34,197,94,0.3)]">
+            <div className={clsx('w-10 h-10 rounded-full flex items-center justify-center shrink-0', statusStyle.icon)}>
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
             <div className="ml-3">
               <p className="text-text-primary text-[12px] font-medium mb-0.5">Safety Status</p>
               <h3 className="text-text-primary text-[14px] font-bold">
-                You are in <span className="text-success">Safe Zone</span>
+                {safetyData ? (
+                  <>
+                    You are in <span className={statusStyle.text}>{safetyData.label.replace(/^Inside /, '')}</span>
+                  </>
+                ) : safety.status === 'loading' ? (
+                  'Checking your area…'
+                ) : safety.status === 'error' ? (
+                  'Safety data unavailable'
+                ) : (
+                  'Enable location to check'
+                )}
               </h3>
             </div>
           </div>
-          <div className="bg-success text-white px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wide shadow-sm">
-            RISK: LOW
+          <div className={clsx('text-white px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wide shadow-sm shrink-0', statusStyle.badge)}>
+            RISK: {safetyData ? safetyData.riskLevel : '--'}
           </div>
-        </div>
+        </button>
 
         {/* AI Tip Card */}
         <div className="w-full bg-primary/5 rounded-[16px] p-4 flex items-start border border-primary/20">
@@ -190,9 +295,7 @@ const HomeScreen = () => {
           </div>
           <div className="ml-3">
             <h3 className="text-primary text-[13px] font-bold mb-1">AI Travel Tip</h3>
-            <p className="text-text-secondary text-[12px] leading-relaxed">
-              Weather is clear for the next 4 hours. It's a great time to start your planned trip to the National Park.
-            </p>
+            <p className="text-text-secondary text-[12px] leading-relaxed">{tip}</p>
           </div>
         </div>
 

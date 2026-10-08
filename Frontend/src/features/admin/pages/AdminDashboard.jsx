@@ -1,33 +1,73 @@
-import React from 'react';
-import { 
-  Users, MapPin, Navigation, ShieldCheck, TrendingUp, AlertTriangle, 
-  Bell, Activity, Map, BrainCircuit, Plus, Eye, ShieldAlert, ArrowRight, Clock, AlertOctagon
+import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Users, MapPin, Navigation, ShieldCheck, Bell, Activity, Map, BrainCircuit, Eye, ShieldAlert, Clock, AlertOctagon
 } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
+import MapView from '../../../components/map/MapView';
+import { ErrorState, LoadingState } from '../../../components/common/StateViews';
+import { useAsync } from '../../../hooks/useAsync';
+import { adminService } from '../../../services/adminService';
+import { riskService } from '../../../services/riskService';
+import { useSocketEvent } from '../../../context/NotificationContext';
+import { boundsOf, timeAgo } from '../../../utils/format';
 
-const StatCard = ({ title, value, icon: Icon, trend, trendUp, type }) => (
+// trendUp = direction of change; risingIsGood decides whether that direction is shown green or red.
+const StatCard = ({ title, value, icon: Icon, trend, trendUp, risingIsGood = true, type }) => (
   <GlassCard className="p-5">
     <div className="flex justify-between items-start mb-3">
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-        type === 'danger' ? 'bg-danger/10 text-danger' : 
+        type === 'danger' ? 'bg-danger/10 text-danger' :
         type === 'warning' ? 'bg-warning/10 text-warning' :
         type === 'success' ? 'bg-success/10 text-success' :
         'bg-primary/10 text-primary'
       }`}>
         <Icon className="w-5 h-5" />
       </div>
-      <div className={`px-2 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 ${
-        trendUp ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
+      <div title="Last 7 days vs previous 7 days" className={`px-2 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 ${
+        trendUp === risingIsGood ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
       }`}>
         {trendUp ? '↑' : '↓'} {trend}
       </div>
     </div>
     <h3 className="text-text-secondary text-xs font-medium mb-1">{title}</h3>
-    <h2 className="text-text-primary text-2xl font-bold">{value}</h2>
+    <h2 className="text-text-primary text-2xl font-bold">{Number(value).toLocaleString()}</h2>
   </GlassCard>
 );
 
+const alertLocation = (alert) =>
+  alert.riskZone?.name || alert.meta?.address || (Number.isFinite(alert.latitude) ? `${alert.latitude.toFixed(4)}, ${alert.longitude.toFixed(4)}` : '—');
+
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const stats = useAsync(() => adminService.stats(), []);
+  const zones = useAsync(() => riskService.list(), []);
+  const reloadTimer = useRef(null);
+
+  // Refresh live numbers when relevant real-time events arrive (debounced).
+  const scheduleReload = () => {
+    clearTimeout(reloadTimer.current);
+    reloadTimer.current = setTimeout(() => stats.reload(), 1500);
+  };
+  useEffect(() => () => clearTimeout(reloadTimer.current), []);
+  useSocketEvent('sos:triggered', scheduleReload);
+  useSocketEvent('sos:updated', scheduleReload);
+  useSocketEvent('journey:start', scheduleReload);
+  useSocketEvent('journey:end', scheduleReload);
+  useSocketEvent('journey:risk-alert', scheduleReload);
+  useSocketEvent('admin:zone-updated', () => {
+    scheduleReload();
+    zones.reload();
+  });
+
+  if (stats.loading && !stats.data) return <LoadingState label="Loading dashboard…" />;
+  if (stats.status === 'error') return <ErrorState message={stats.error.message} onRetry={stats.reload} />;
+
+  const d = stats.data;
+  const t = d.totals;
+  const zoneFeatures = zones.data?.features || [];
+  const zoneBounds = boundsOf(zoneFeatures.map((f) => [f.properties.center.longitude, f.properties.center.latitude]));
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -38,11 +78,11 @@ const AdminDashboard = () => {
 
       {/* 1. Top Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <StatCard title="Total Users" value="12,450" icon={Users} trend="12.5%" trendUp={true} />
-        <StatCard title="Active Trips" value="3,842" icon={Navigation} trend="5.4%" trendUp={true} />
-        <StatCard title="Danger Zones" value="142" icon={AlertOctagon} trend="2.1%" trendUp={false} type="danger" />
-        <StatCard title="Safe Zones" value="8,230" icon={ShieldCheck} trend="8.1%" trendUp={true} type="success" />
-        <StatCard title="Emergency Alerts" value="5" icon={Bell} trend="14.2%" trendUp={false} type="danger" />
+        <StatCard title="Total Users" value={t.users.value} icon={Users} trend={t.users.trend.value} trendUp={t.users.trend.up} />
+        <StatCard title="Active Trips" value={t.activeTrips.value} icon={Navigation} trend={t.activeTrips.trend.value} trendUp={t.activeTrips.trend.up} />
+        <StatCard title="Danger Zones" value={t.dangerZones.value} icon={AlertOctagon} trend={t.dangerZones.trend.value} trendUp={t.dangerZones.trend.up} risingIsGood={false} type="danger" />
+        <StatCard title="Low-Risk Zones" value={t.lowRiskZones.value} icon={ShieldCheck} trend={t.lowRiskZones.trend.value} trendUp={t.lowRiskZones.trend.up} type="success" />
+        <StatCard title="Emergency Alerts" value={t.emergencyAlerts.value} icon={Bell} trend={t.emergencyAlerts.trend.value} trendUp={t.emergencyAlerts.trend.up} risingIsGood={false} type="danger" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -53,44 +93,48 @@ const AdminDashboard = () => {
               <ShieldAlert className="text-danger w-5 h-5" />
               Live Emergency Alerts
             </h3>
-            <span className="px-3 py-1 bg-danger/10 text-danger text-xs font-bold rounded-full animate-pulse">
-              5 ACTIVE ALERTS
+            <span className={`px-3 py-1 text-xs font-bold rounded-full ${d.emergency.activeSos ? 'bg-danger/10 text-danger animate-pulse' : 'bg-success/10 text-success'}`}>
+              {d.emergency.activeSos} ACTIVE SOS
             </span>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="bg-danger/5 rounded-xl p-4 text-center">
-              <h4 className="text-2xl font-bold text-danger mb-1">2</h4>
-              <p className="text-xs text-text-secondary font-medium uppercase">SOS Triggered</p>
+              <h4 className="text-2xl font-bold text-danger mb-1">{d.emergency.sosToday}</h4>
+              <p className="text-xs text-text-secondary font-medium uppercase">SOS Today</p>
             </div>
             <div className="bg-warning/5 rounded-xl p-4 text-center">
-              <h4 className="text-2xl font-bold text-warning mb-1">3</h4>
+              <h4 className="text-2xl font-bold text-warning mb-1">{d.emergency.riskWarningsToday}</h4>
               <p className="text-xs text-text-secondary font-medium uppercase">Risk Warnings</p>
             </div>
             <div className="bg-primary/5 rounded-xl p-4 text-center">
-              <h4 className="text-2xl font-bold text-primary mb-1">12</h4>
+              <h4 className="text-2xl font-bold text-primary mb-1">{d.emergency.resolvedToday}</h4>
               <p className="text-xs text-text-secondary font-medium uppercase">Resolved Today</p>
             </div>
           </div>
 
           <div className="space-y-3">
-            {[
-              { type: 'SOS', msg: 'User initiated SOS via panic button', loc: 'Downtown Metro Station', time: 'Just now' },
-              { type: 'SOS', msg: 'High stress level detected in biometric sync', loc: 'Industrial Area Sector 4', time: '2 min ago' },
-              { type: 'WARNING', msg: 'User entered reported protest zone', loc: 'City Hall Square', time: '5 min ago' }
-            ].map((alert, i) => (
-              <div key={i} className="flex items-center justify-between bg-white/40 p-3 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${alert.type === 'SOS' ? 'bg-danger' : 'bg-warning'}`}></div>
-                  <div>
-                    <p className="text-sm font-semibold text-text-primary">{alert.msg}</p>
-                    <p className="text-xs text-text-secondary flex items-center gap-1 mt-0.5">
-                      <MapPin className="w-3 h-3" /> {alert.loc}
+            {d.recentAlerts.length === 0 && <p className="text-sm text-text-secondary">No alerts yet.</p>}
+            {d.recentAlerts.map((alert) => (
+              <button
+                key={alert.id}
+                onClick={() => navigate(alert.type === 'SOS' ? '/admin/alerts/sos' : '/admin/alerts/live')}
+                className="w-full flex items-center justify-between bg-white/40 p-3 rounded-lg text-left hover:bg-white/70 transition"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${alert.type === 'SOS' ? 'bg-danger' : 'bg-warning'}`}></div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-text-primary truncate">
+                      {alert.title}{alert.user ? ` — ${alert.user.name}` : ''}
+                      {alert.type === 'SOS' && alert.status !== 'active' && <span className="ml-2 text-[10px] text-success uppercase">{alert.status}</span>}
+                    </p>
+                    <p className="text-xs text-text-secondary flex items-center gap-1 mt-0.5 truncate">
+                      <MapPin className="w-3 h-3 shrink-0" /> {alertLocation(alert)}
                     </p>
                   </div>
                 </div>
-                <span className="text-xs font-medium text-gray-500">{alert.time}</span>
-              </div>
+                <span className="text-xs font-medium text-gray-500 shrink-0 ml-2">{timeAgo(alert.createdAt)}</span>
+              </button>
             ))}
           </div>
         </GlassCard>
@@ -102,61 +146,72 @@ const AdminDashboard = () => {
               <Activity className="text-primary w-5 h-5" />
               Live Trip Monitoring
             </h3>
-            
+
             <div className="space-y-5 mb-8">
               <div className="flex justify-between items-center pb-4 border-b border-gray-100">
                 <span className="text-sm text-text-secondary">Active Travelers</span>
-                <span className="text-lg font-bold text-text-primary">2,410</span>
+                <span className="text-lg font-bold text-text-primary">{d.liveMonitoring.activeTravelers}</span>
               </div>
               <div className="flex justify-between items-center pb-4 border-b border-gray-100">
                 <span className="text-sm text-text-secondary">Monitored Trips</span>
-                <span className="text-lg font-bold text-text-primary">3,842</span>
+                <span className="text-lg font-bold text-text-primary">{d.liveMonitoring.monitoredTrips}</span>
+              </div>
+              <div className="flex justify-between items-center pb-4 border-b border-gray-100">
+                <span className="text-sm text-text-secondary">Users Online</span>
+                <span className="text-lg font-bold text-text-primary">{d.liveMonitoring.connectedUsers}</span>
               </div>
               <div className="flex justify-between items-center pb-4 border-b border-gray-100">
                 <span className="text-sm text-text-secondary">Overall Risk Status</span>
-                <span className="text-sm font-bold text-success px-2 py-1 bg-success/10 rounded-md">Low / Stable</span>
+                <span className={`text-sm font-bold px-2 py-1 rounded-md ${d.liveMonitoring.overallRisk === 'Low / Stable' ? 'text-success bg-success/10' : 'text-danger bg-danger/10'}`}>
+                  {d.liveMonitoring.overallRisk}
+                </span>
               </div>
             </div>
           </div>
-          
-          <button className="w-full py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition flex items-center justify-center gap-2">
+
+          <button
+            onClick={() => navigate('/admin/tracking/live')}
+            className="w-full py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition flex items-center justify-center gap-2"
+          >
             <Map className="w-4 h-4" /> View Live Map
           </button>
         </GlassCard>
 
         {/* 4. Risk Heatmap Preview */}
         <GlassCard className="lg:col-span-2 p-0 overflow-hidden relative min-h-[300px]">
-          <div className="absolute inset-0 bg-gray-100/50 flex flex-col">
-            <div className="p-6 relative z-10 flex-1">
-               <h3 className="text-lg font-bold text-text-primary flex items-center gap-2">
-                <MapPin className="text-text-primary w-5 h-5" />
-                Risk Heatmap Overview
-              </h3>
-              
-              <div className="mt-4 inline-block bg-white/80 backdrop-blur-md p-4 rounded-xl shadow-sm border border-white">
-                <p className="text-xs font-bold text-text-secondary uppercase mb-2">City Risk Levels</p>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-danger"></div>
-                    <span className="text-sm text-text-primary font-medium">High Risk (Red)</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-warning"></div>
-                    <span className="text-sm text-text-primary font-medium">Medium Risk (Yellow)</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-success"></div>
-                    <span className="text-sm text-text-primary font-medium">Safe (Green)</span>
-                  </div>
+          <div className="absolute inset-0">
+            <MapView
+              zones={zones.data}
+              fitBounds={zoneBounds}
+              fitKey={zoneFeatures.length}
+              variant="light"
+              zoomControl
+              className="absolute inset-0"
+            />
+          </div>
+          <div className="absolute top-0 left-0 p-6 z-10 pointer-events-none">
+            <h3 className="text-lg font-bold text-text-primary flex items-center gap-2 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-xl w-fit">
+              <MapPin className="text-text-primary w-5 h-5" />
+              Risk Zones Overview
+            </h3>
+
+            <div className="mt-4 inline-block bg-white/80 backdrop-blur-md p-4 rounded-xl shadow-sm border border-white">
+              <p className="text-xs font-bold text-text-secondary uppercase mb-2">Risk Levels</p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-danger"></div>
+                  <span className="text-sm text-text-primary font-medium">High Risk (Red)</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-warning"></div>
+                  <span className="text-sm text-text-primary font-medium">Medium Risk (Orange)</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-success"></div>
+                  <span className="text-sm text-text-primary font-medium">Low Risk (Green)</span>
                 </div>
               </div>
             </div>
-            
-            {/* Abstract Map Background Simulation */}
-            <div className="absolute right-0 bottom-0 w-2/3 h-full opacity-30 pointer-events-none" style={{
-              backgroundImage: 'radial-gradient(circle at 70% 30%, #ef4444 0%, transparent 40%), radial-gradient(circle at 30% 70%, #f59e0b 0%, transparent 40%), radial-gradient(circle at 50% 50%, #10b981 0%, transparent 60%)',
-              filter: 'blur(30px)'
-            }}></div>
           </div>
         </GlassCard>
 
@@ -164,22 +219,22 @@ const AdminDashboard = () => {
         <GlassCard className="p-6 border-t-4 border-t-primary">
            <h3 className="text-lg font-bold text-text-primary flex items-center gap-2 mb-6">
             <BrainCircuit className="text-primary w-5 h-5" />
-            AI Safety Insights
+            Safety Insights
           </h3>
-          
+
           <div className="space-y-4">
             <div className="bg-primary/5 p-4 rounded-xl">
-              <p className="text-xs text-text-secondary uppercase font-semibold mb-1">Most Risky Time</p>
-              <p className="text-sm font-bold text-text-primary">11:00 PM - 2:00 AM</p>
+              <p className="text-xs text-text-secondary uppercase font-semibold mb-1">Most Risky Time (30 days)</p>
+              <p className="text-sm font-bold text-text-primary">{d.insights.mostRiskyTime || 'Not enough alert data yet'}</p>
             </div>
             <div className="bg-primary/5 p-4 rounded-xl">
-              <p className="text-xs text-text-secondary uppercase font-semibold mb-1">Most Reported Location</p>
-              <p className="text-sm font-bold text-text-primary">Downtown North Sector</p>
+              <p className="text-xs text-text-secondary uppercase font-semibold mb-1">Most Alerted Zone (30 days)</p>
+              <p className="text-sm font-bold text-text-primary">{d.insights.mostReportedZone || 'Not enough alert data yet'}</p>
             </div>
             <div className="bg-primary/5 p-4 rounded-xl">
               <p className="text-xs text-text-secondary uppercase font-semibold mb-1">AI Prediction</p>
               <p className="text-sm font-medium text-text-primary">
-                Risk expected to <span className="text-danger font-bold">increase</span> in East End due to upcoming public event.
+                {d.insights.prediction || 'No verified prediction data is available. Predictions are not generated without a trusted data source.'}
               </p>
             </div>
           </div>
@@ -192,24 +247,19 @@ const AdminDashboard = () => {
             Safety Timeline
           </h3>
           <div className="space-y-6">
-            {[
-              { title: 'SOS Alert Triggered', loc: 'Downtown Metro', time: '2 mins ago', type: 'critical' },
-              { title: 'New Danger Zone Added', loc: 'Highway 45', time: '1 hour ago', type: 'warning' },
-              { title: 'User Entered High-Risk Area', loc: 'Sector 7G', time: '2 hours ago', type: 'warning' },
-              { title: 'Report Resolved', loc: 'Central Park', time: '3 hours ago', type: 'info' },
-              { title: 'Safe Zone Verified', loc: 'West End Mall', time: '5 hours ago', type: 'success' },
-            ].map((activity, i) => (
-              <div key={i} className="flex gap-4 relative">
-                {i !== 4 && <div className="absolute left-2.5 top-6 w-[1px] h-10 bg-gray-200"></div>}
+            {d.timeline.length === 0 && <p className="text-sm text-text-secondary">No activity yet.</p>}
+            {d.timeline.map((activity, i) => (
+              <div key={`${activity.title}-${activity.time}`} className="flex gap-4 relative">
+                {i !== d.timeline.length - 1 && <div className="absolute left-2.5 top-6 w-[1px] h-10 bg-gray-200"></div>}
                 <div className={`w-5 h-5 rounded-full mt-0.5 shrink-0 border-2 border-white shadow-sm ${
-                  activity.type === 'critical' ? 'bg-danger' : 
-                  activity.type === 'warning' ? 'bg-warning' : 
+                  activity.type === 'critical' ? 'bg-danger' :
+                  activity.type === 'warning' ? 'bg-warning' :
                   activity.type === 'success' ? 'bg-success' : 'bg-primary'
                 }`}></div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-text-primary">{activity.title}</p>
-                  <p className="text-xs text-text-secondary mt-0.5">{activity.loc}</p>
-                  <p className="text-[11px] text-gray-400 mt-1">{activity.time}</p>
+                  <p className="text-xs text-text-secondary mt-0.5 truncate">{activity.detail}</p>
+                  <p className="text-[11px] text-gray-400 mt-1">{timeAgo(activity.time)}</p>
                 </div>
               </div>
             ))}
@@ -220,25 +270,25 @@ const AdminDashboard = () => {
         <GlassCard className="p-6">
           <h3 className="text-lg font-bold text-text-primary mb-6">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-3">
-            <button className="flex flex-col items-center justify-center p-4 bg-white/50 hover:bg-danger/10 border border-gray-100 rounded-xl transition group text-center gap-2">
+            <button onClick={() => navigate('/admin/danger-zones/add', { state: { riskLevel: 'HIGH' } })} className="flex flex-col items-center justify-center p-4 bg-white/50 hover:bg-danger/10 border border-gray-100 rounded-xl transition group text-center gap-2">
               <div className="w-8 h-8 rounded-full bg-danger/10 text-danger flex items-center justify-center group-hover:scale-110 transition">
                 <AlertOctagon className="w-4 h-4" />
               </div>
               <span className="text-xs font-bold text-text-primary">Add Danger Zone</span>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 bg-white/50 hover:bg-success/10 border border-gray-100 rounded-xl transition group text-center gap-2">
+            <button onClick={() => navigate('/admin/danger-zones/add', { state: { riskLevel: 'LOW' } })} className="flex flex-col items-center justify-center p-4 bg-white/50 hover:bg-success/10 border border-gray-100 rounded-xl transition group text-center gap-2">
               <div className="w-8 h-8 rounded-full bg-success/10 text-success flex items-center justify-center group-hover:scale-110 transition">
                 <ShieldCheck className="w-4 h-4" />
               </div>
-              <span className="text-xs font-bold text-text-primary">Add Safe Zone</span>
+              <span className="text-xs font-bold text-text-primary">Add Low-Risk Zone</span>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 bg-white/50 hover:bg-primary/10 border border-gray-100 rounded-xl transition group text-center gap-2">
+            <button onClick={() => navigate('/admin/reports')} className="flex flex-col items-center justify-center p-4 bg-white/50 hover:bg-primary/10 border border-gray-100 rounded-xl transition group text-center gap-2">
               <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition">
                 <Eye className="w-4 h-4" />
               </div>
               <span className="text-xs font-bold text-text-primary">View Reports</span>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 bg-white/50 hover:bg-warning/10 border border-gray-100 rounded-xl transition group text-center gap-2">
+            <button onClick={() => navigate('/admin/notifications/send')} className="flex flex-col items-center justify-center p-4 bg-white/50 hover:bg-warning/10 border border-gray-100 rounded-xl transition group text-center gap-2">
               <div className="w-8 h-8 rounded-full bg-warning/10 text-warning flex items-center justify-center group-hover:scale-110 transition">
                 <Bell className="w-4 h-4" />
               </div>
@@ -251,39 +301,31 @@ const AdminDashboard = () => {
         <GlassCard className="p-6">
           <h3 className="text-lg font-bold text-text-primary mb-6">Zone Analytics</h3>
           <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm font-semibold mb-1">
-                <span className="text-text-primary">High Risk Zones</span>
-                <span className="text-danger">15%</span>
+            {[
+              { label: 'High Risk Zones', pct: d.zoneAnalytics.high, color: 'bg-danger', text: 'text-danger' },
+              { label: 'Medium Risk Zones', pct: d.zoneAnalytics.medium, color: 'bg-warning', text: 'text-warning' },
+              { label: 'Low Risk Zones', pct: d.zoneAnalytics.low, color: 'bg-success', text: 'text-success' },
+            ].map((row) => (
+              <div key={row.label}>
+                <div className="flex justify-between text-sm font-semibold mb-1">
+                  <span className="text-text-primary">{row.label}</span>
+                  <span className={row.text}>{row.pct}%</span>
+                </div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full ${row.color}`} style={{ width: `${row.pct}%` }}></div>
+                </div>
               </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-danger w-[15%]"></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-sm font-semibold mb-1">
-                <span className="text-text-primary">Medium Risk Zones</span>
-                <span className="text-warning">28%</span>
-              </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-warning w-[28%]"></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-sm font-semibold mb-1">
-                <span className="text-text-primary">Safe / Low Risk Zones</span>
-                <span className="text-success">57%</span>
-              </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-success w-[57%]"></div>
-              </div>
-            </div>
+            ))}
           </div>
-          
+
           <div className="mt-6 pt-6 border-t border-gray-100">
              <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-text-secondary">Recently Updated</span>
-              <span className="text-sm font-bold text-text-primary">24 Zones (Today)</span>
+              <span className="text-sm font-bold text-text-primary">{d.zoneAnalytics.updatedToday} Zones (Today)</span>
+             </div>
+             <div className="flex justify-between items-center mt-2">
+              <span className="text-sm font-medium text-text-secondary">Active zones</span>
+              <span className="text-sm font-bold text-text-primary">{d.zoneAnalytics.total}</span>
              </div>
           </div>
         </GlassCard>

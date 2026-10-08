@@ -18,3 +18,31 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Leaflet map */
+.leaflet-container {
+  font-family: 'Poppins', sans-serif;
+  background: #F1F5F9;
+}
+.leaflet-container img {
+  max-width: none !important;
+  max-height: none !important;
+}
+.leaflet-control-attribution {
+  font-size: 9px !important;
+  line-height: 1.4;
+}
+.saferoute-marker {
+  background: transparent;
+  border: none;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 14px;
+}
+.map-thumbnail .leaflet-control-attribution {
+  font-size: 7px !important;
+  padding: 0 2px;
+}
+.map-light .leaflet-tile-pane {
+  filter: grayscale(0.85) brightness(1.08) contrast(0.88);
+}

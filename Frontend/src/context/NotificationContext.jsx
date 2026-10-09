@@ -4,9 +4,21 @@ import { connectSocket, disconnectSocket, getSocket } from '../services/socket';
 import { notificationService } from '../services/notificationService';
 import { enablePushNotifications, pushPermission } from '../services/pushService';
 import Toast from '../components/common/Toast';
+import alertSoundAsset from '../assets/mixkit-signal-alert-771.wav';
 
 const NotificationContext = createContext(null);
-const REALTIME_EVENTS = ['journey:notification', 'admin:notification'];
+const REALTIME_EVENTS = ['journey:notification', 'admin:notification', 'journey:risk-alert'];
+
+export const playAlertSound = () => {
+  try {
+    const audio = new Audio(alertSoundAsset);
+    audio.play().catch((err) => {
+      console.warn('[Audio] Signal alert playback error or blocked by browser policy:', err);
+    });
+  } catch (e) {
+    console.error('[Audio] Could not play danger zone alert sound:', e);
+  }
+};
 
 export const NotificationProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
@@ -28,6 +40,20 @@ export const NotificationProvider = ({ children }) => {
     (toast) => {
       const id = toast.id || `${Date.now()}-${Math.random()}`;
       setToasts((list) => [{ ...toast, id }, ...list.filter((t) => t.id !== id)].slice(0, 3));
+
+      // Play alert sound for Danger Zone / Risk Alerts / High Severity / SOS
+      const isDangerOrRisk =
+        toast.type === 'RISK_ALERT' ||
+        toast.type === 'SOS' ||
+        toast.severity === 'HIGH' ||
+        toast.severity === 'CRITICAL' ||
+        (toast.title && /danger|risk|warning|hazard|sos|alert/i.test(toast.title)) ||
+        (toast.message && /danger|risk|warning|hazard|sos|alert/i.test(toast.message));
+
+      if (isDangerOrRisk) {
+        playAlertSound();
+      }
+
       toastTimers.current[id] = setTimeout(() => dismissToast(id), toast.severity === 'HIGH' || toast.severity === 'CRITICAL' ? 9000 : 5000);
     },
     [dismissToast]
@@ -103,7 +129,7 @@ export const NotificationProvider = ({ children }) => {
   );
 
   const value = useMemo(
-    () => ({ notifications, unreadCount, status, error, connected, refresh, markRead, markAllRead, remove, showToast }),
+    () => ({ notifications, unreadCount, status, error, connected, refresh, markRead, markAllRead, remove, showToast, playAlertSound }),
     [notifications, unreadCount, status, error, connected, refresh, markRead, markAllRead, remove, showToast]
   );
 

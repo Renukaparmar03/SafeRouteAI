@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Outlet, Navigate, Link } from 'react-router-dom';
+=======
+
+import React, { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, Outlet, Navigate, Link } from 'react-router-dom';
+
+
+>>>>>>> 88b07493d72f06eb29fb1bb0bd825a36f8b5b8fa
 import { ROUTES } from './constants/routes';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';

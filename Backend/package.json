@@ -2,6 +2,7 @@
   "name": "saferoute-ai-backend",
   "version": "1.0.0",
   "description": "Backend for SafeRoute AI",
+<<<<<<< HEAD
   "main": "src/server.js",
   "type": "module",
   "scripts": {
@@ -9,6 +10,13 @@
     "dev": "nodemon --watch src src/server.js",
     "seed": "node src/seed/seedDatabase.js",
     "check": "node --check src/server.js"
+=======
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node api.js && node server.js",
+    "dev": "node api.js && nodemon server.js"
+>>>>>>> 4c3fb02a5173f8cf82d595a68a73f51f8f808a0f
   },
   "keywords": [],
   "author": "",
@@ -21,8 +29,11 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.1",
     "socket.io": "^4.8.3"
+<<<<<<< HEAD
   },
   "engines": {
     "node": ">=20.0.0"
+=======
+>>>>>>> 4c3fb02a5173f8cf82d595a68a73f51f8f808a0f
   }
 }

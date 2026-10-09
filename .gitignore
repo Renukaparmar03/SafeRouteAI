@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Dependencies
 node_modules/
 
@@ -19,3 +20,8 @@ logs/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+=======
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+>>>>>>> 4c3fb02a5173f8cf82d595a68a73f51f8f808a0f

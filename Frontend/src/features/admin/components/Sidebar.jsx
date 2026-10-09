@@ -70,6 +70,7 @@ const NavGroup = ({ item, isActive, isActiveGroup, location }) => {
 
 const Sidebar = () => {
   const location = useLocation();
+<<<<<<< HEAD
   const navigate = useNavigate();
   const { logout, user } = useAuth();
 
@@ -77,6 +78,8 @@ const Sidebar = () => {
     await logout();
     navigate('/admin/login', { replace: true });
   };
+=======
+>>>>>>> 4c3fb02a5173f8cf82d595a68a73f51f8f808a0f
 
   const navItems = [
     { name: 'Dashboard', path: '/admin/home', icon: LayoutDashboard },
@@ -189,9 +192,13 @@ const Sidebar = () => {
       </nav>
 
       <div className="p-4 border-t border-white/40 shrink-0">
+<<<<<<< HEAD
         {user && <p className="px-4 pb-2 text-xs text-text-secondary truncate">Signed in as <span className="font-semibold text-text-primary">{user.name}</span></p>}
         <button
           onClick={handleLogout}
+=======
+        <button
+>>>>>>> 4c3fb02a5173f8cf82d595a68a73f51f8f808a0f
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all duration-200"
         >
           <LogOut className="w-5 h-5" />

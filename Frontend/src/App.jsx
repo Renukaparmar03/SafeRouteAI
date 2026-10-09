@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Outlet, Navigate, Link } from 'react-router-dom';
-=======
-import React from 'react';
-import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
->>>>>>> 4c3fb02a5173f8cf82d595a68a73f51f8f808a0f
 import { ROUTES } from './constants/routes';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -31,7 +26,6 @@ const MyTripsScreen = lazy(() => import('./features/trips/pages/MyTripsScreen'))
 const SafetyCheckScreen = lazy(() => import('./features/safety/pages/SafetyCheckScreen'));
 
 // Admin Imports
-<<<<<<< HEAD
 const AdminLayout = lazy(() => import('./features/admin/layouts/AdminLayout'));
 const AdminLogin = lazy(() => import('./features/admin/pages/AdminLogin'));
 const AdminRegister = lazy(() => import('./features/admin/pages/AdminRegister'));
@@ -50,148 +44,84 @@ const NotFound = () => (
     <Link to={ROUTES.HOME} className="text-primary font-bold text-[14px] hover:underline">
       Go to Home
     </Link>
-=======
-import AdminLayout from './features/admin/layouts/AdminLayout';
-import AdminLogin from './features/admin/pages/AdminLogin';
-import AdminRegister from './features/admin/pages/AdminRegister';
-import AdminDashboard from './features/admin/pages/AdminDashboard';
-import ZoneManagement from './features/admin/pages/ZoneManagement';
-import AddDangerZone from './features/admin/pages/AddDangerZone';
-import UserManagement from './features/admin/pages/UserManagement';
-import ReportsManagement from './features/admin/pages/ReportsManagement';
-
-// Placeholder for other pages to avoid errors
-const Placeholder = ({ title }) => (
-  <div className="flex h-screen items-center justify-center bg-background text-text-primary">
-    <h1 className="text-subheading">{title} (Coming Soon)</h1>
->>>>>>> 4c3fb02a5173f8cf82d595a68a73f51f8f808a0f
   </div>
 );
 
 function App() {
   return (
     <BrowserRouter>
-<<<<<<< HEAD
       <AuthProvider>
         <NotificationProvider>
           <JourneyProvider>
             <Suspense fallback={<div className="w-full min-h-screen flex items-center justify-center bg-background"><LoadingState /></div>}>
-            <Routes>
-              {/* Admin Portal (Desktop Layout) */}
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin/register" element={<AdminRegister />} />
-              <Route element={<RequireAdmin />}>
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<Navigate to="home" replace />} />
-                  <Route path="home" element={<AdminDashboard />} />
-                  <Route path="analytics/*" element={<AdminDashboard />} />
-                  <Route path="zones" element={<ZoneManagement />} />
-                  <Route path="danger-zones" element={<ZoneManagement />} />
-                  <Route path="add-danger-zone" element={<AddDangerZone />} />
-                  <Route path="danger-zones/add" element={<AddDangerZone />} />
-                  <Route path="danger-zones/:id/edit" element={<AddDangerZone />} />
-                  <Route path="users/*" element={<UserManagement />} />
-                  <Route path="reports" element={<ReportsManagement />} />
-                  <Route path="map/reports" element={<ReportsManagement />} />
-                  <Route path="alerts/*" element={<ReportsManagement />} />
-                  <Route path="trips/*" element={<TripMonitoring />} />
-                  <Route path="tracking/live" element={<TripMonitoring />} />
-                  <Route path="tracking/history" element={<TripMonitoring />} />
-                  <Route path="notifications/*" element={<SendNotification />} />
-                  <Route path="settings/*" element={<AdminSettings />} />
-                  <Route path="tracking/settings" element={<AdminSettings />} />
-                  <Route path="ai/*" element={<AdminSettings />} />
+              <Routes>
+                {/* Admin Portal (Desktop Layout) */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin/register" element={<AdminRegister />} />
+                <Route element={<RequireAdmin />}>
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<Navigate to="home" replace />} />
+                    <Route path="home" element={<AdminDashboard />} />
+                    <Route path="analytics/*" element={<AdminDashboard />} />
+                    <Route path="zones" element={<ZoneManagement />} />
+                    <Route path="danger-zones" element={<ZoneManagement />} />
+                    <Route path="add-danger-zone" element={<AddDangerZone />} />
+                    <Route path="danger-zones/add" element={<AddDangerZone />} />
+                    <Route path="danger-zones/:id/edit" element={<AddDangerZone />} />
+                    <Route path="users/*" element={<UserManagement />} />
+                    <Route path="reports" element={<ReportsManagement />} />
+                    <Route path="map/reports" element={<ReportsManagement />} />
+                    <Route path="alerts/*" element={<ReportsManagement />} />
+                    <Route path="trips/*" element={<TripMonitoring />} />
+                    <Route path="tracking/live" element={<TripMonitoring />} />
+                    <Route path="tracking/history" element={<TripMonitoring />} />
+                    <Route path="notifications/*" element={<SendNotification />} />
+                    <Route path="settings/*" element={<AdminSettings />} />
+                    <Route path="tracking/settings" element={<AdminSettings />} />
+                    <Route path="ai/*" element={<AdminSettings />} />
+                  </Route>
                 </Route>
-              </Route>
 
-              {/* User App (Mobile Layout) */}
-              <Route
-                element={
-                  <div className="w-full min-h-screen bg-surface flex justify-center">
-                    <div className="w-full max-w-md bg-background shadow-soft min-h-screen relative overflow-hidden">
-                      <Outlet />
+                {/* User App (Mobile Layout) */}
+                <Route
+                  element={
+                    <div className="w-full min-h-screen bg-surface flex justify-center">
+                      <div className="w-full max-w-md bg-background shadow-soft min-h-screen relative overflow-hidden">
+                        <Outlet />
+                      </div>
                     </div>
-                  </div>
-                }
-              >
-                <Route path={ROUTES.SPLASH} element={<SplashScreen />} />
-                <Route path={ROUTES.ONBOARDING} element={<OnboardingScreen />} />
-                <Route path={ROUTES.LOGIN} element={<LoginScreen />} />
-                <Route path={ROUTES.SIGNUP} element={<SignupScreen />} />
+                  }
+                >
+                  <Route path={ROUTES.SPLASH} element={<SplashScreen />} />
+                  <Route path={ROUTES.ONBOARDING} element={<OnboardingScreen />} />
+                  <Route path={ROUTES.LOGIN} element={<LoginScreen />} />
+                  <Route path={ROUTES.SIGNUP} element={<SignupScreen />} />
 
-                <Route element={<RequireAuth />}>
-                  <Route path={ROUTES.HOME} element={<HomeScreen />} />
-                  <Route path={ROUTES.TRIP_PLANNER} element={<TripPlannerScreen />} />
-                  <Route path={ROUTES.TRIP_DETAILS} element={<Navigate to={ROUTES.MY_TRIPS} replace />} />
-                  <Route path={`${ROUTES.TRIP_DETAILS}/:id`} element={<TripDetailsScreen />} />
-                  <Route path={ROUTES.EMERGENCY} element={<EmergencyScreen />} />
-                  <Route path={ROUTES.SOS_CONFIRM} element={<SOSConfirmScreen />} />
-                  <Route path={ROUTES.ALERTS} element={<AlertsScreen />} />
-                  <Route path={ROUTES.PROFILE} element={<ProfileScreen />} />
-                  <Route path={ROUTES.MAP} element={<LiveMapScreen />} />
-                  <Route path={ROUTES.LIVE_TRACKING} element={<LiveTrackingScreen />} />
-                  <Route path={ROUTES.ASSISTANT} element={<AssistantScreen />} />
-                  <Route path={ROUTES.MY_TRIPS} element={<MyTripsScreen />} />
-                  <Route path={ROUTES.SAFETY_CHECK} element={<SafetyCheckScreen />} />
+                  <Route element={<RequireAuth />}>
+                    <Route path={ROUTES.HOME} element={<HomeScreen />} />
+                    <Route path={ROUTES.TRIP_PLANNER} element={<TripPlannerScreen />} />
+                    <Route path={ROUTES.TRIP_DETAILS} element={<Navigate to={ROUTES.MY_TRIPS} replace />} />
+                    <Route path={`${ROUTES.TRIP_DETAILS}/:id`} element={<TripDetailsScreen />} />
+                    <Route path={ROUTES.EMERGENCY} element={<EmergencyScreen />} />
+                    <Route path={ROUTES.SOS_CONFIRM} element={<SOSConfirmScreen />} />
+                    <Route path={ROUTES.ALERTS} element={<AlertsScreen />} />
+                    <Route path={ROUTES.PROFILE} element={<ProfileScreen />} />
+                    <Route path={ROUTES.MAP} element={<LiveMapScreen />} />
+                    <Route path={ROUTES.LIVE_TRACKING} element={<LiveTrackingScreen />} />
+                    <Route path={ROUTES.ASSISTANT} element={<AssistantScreen />} />
+                    <Route path={ROUTES.MY_TRIPS} element={<MyTripsScreen />} />
+                    <Route path={ROUTES.SAFETY_CHECK} element={<SafetyCheckScreen />} />
+                  </Route>
+
+                  {/* 404 Fallback */}
+                  <Route path="*" element={<NotFound />} />
                 </Route>
-
-                {/* 404 Fallback */}
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
+              </Routes>
             </Suspense>
           </JourneyProvider>
         </NotificationProvider>
       </AuthProvider>
-=======
-      <Routes>
-        {/* Admin Portal (Desktop Layout) */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/register" element={<AdminRegister />} />
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="home" replace />} />
-          <Route path="home" element={<AdminDashboard />} />
-          <Route path="zones" element={<ZoneManagement />} />
-          <Route path="add-danger-zone" element={<AddDangerZone />} />
-          <Route path="users" element={<UserManagement />} />
-          <Route path="reports" element={<ReportsManagement />} />
-          <Route path="danger-zones" element={<Placeholder title="Danger Zones" />} />
-          <Route path="settings" element={<Placeholder title="Settings" />} />
-        </Route>
-
-        {/* User App (Mobile Layout) */}
-        <Route element={
-          <div className="w-full min-h-screen bg-surface flex justify-center">
-            <div className="w-full max-w-md bg-background shadow-soft min-h-screen relative overflow-hidden">
-              <Outlet />
-            </div>
-          </div>
-        }>
-          <Route path={ROUTES.SPLASH} element={<SplashScreen />} />
-
-          {/* Future Routes */}
-          <Route path={ROUTES.ONBOARDING} element={<OnboardingScreen />} />
-          <Route path={ROUTES.LOGIN} element={<LoginScreen />} />
-          <Route path={ROUTES.SIGNUP} element={<SignupScreen />} />
-          <Route path={ROUTES.HOME} element={<HomeScreen />} />
-          <Route path={ROUTES.TRIP_PLANNER} element={<TripPlannerScreen />} />
-          <Route path={ROUTES.TRIP_DETAILS} element={<TripDetailsScreen />} />
-          <Route path={ROUTES.EMERGENCY} element={<EmergencyScreen />} />
-          <Route path={ROUTES.SOS_CONFIRM} element={<SOSConfirmScreen />} />
-          <Route path={ROUTES.ALERTS} element={<AlertsScreen />} />
-          <Route path={ROUTES.PROFILE} element={<ProfileScreen />} />
-          <Route path={ROUTES.MAP} element={<LiveMapScreen />} />
-          <Route path={ROUTES.LIVE_TRACKING} element={<LiveTrackingScreen />} />
-          <Route path={ROUTES.ASSISTANT} element={<AssistantScreen />} />
-          <Route path={ROUTES.MY_TRIPS} element={<MyTripsScreen />} />
-          <Route path={ROUTES.SAFETY_CHECK} element={<SafetyCheckScreen />} />
-
-          {/* 404 Fallback */}
-          <Route path="*" element={<Placeholder title="404 Not Found" />} />
-        </Route>
-      </Routes>
->>>>>>> 4c3fb02a5173f8cf82d595a68a73f51f8f808a0f
-    </BrowserRouter>
+    </BrowserRouter >
   );
 }
 

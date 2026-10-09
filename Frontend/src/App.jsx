@@ -2,8 +2,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Outlet, Navigate, Link } from 'react-router-dom';
 
-import React from 'react';
-import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 
 import { ROUTES } from './constants/routes';
 import { AuthProvider } from './context/AuthContext';
